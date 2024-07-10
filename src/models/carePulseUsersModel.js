@@ -11,7 +11,6 @@ const carePulseUserSchema = new mongoose.Schema({
         },
         phone: {
             type: String,
-            unique: true,
         },
         dateofbirth: {
             type: String,
@@ -28,7 +27,6 @@ const carePulseUserSchema = new mongoose.Schema({
          },
         emergencyContactPhone: {
             type: String,
-            unique: true,
         },
          profilePic: {
              type: String,
