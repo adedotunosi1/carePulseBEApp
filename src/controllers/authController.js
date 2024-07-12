@@ -280,7 +280,7 @@ const verify_otp = async (req, res, next) => {
     const session = createSession(email);
     const accessToken = signJWT({ email: user.email, _id: user._id, sessionId: session.sessionId  }, "7h");
     const refreshToken = signJWT({ sessionId: session.sessionId }, "1y");
-
+ 
     res.cookie('accessToken', accessToken, {
       maxAge: 25200000,
       httpOnly: true,

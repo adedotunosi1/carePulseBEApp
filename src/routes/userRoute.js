@@ -7,6 +7,8 @@ const userRoute = express.Router();
 
 userRoute.post('/imageUpload', requireUser, upload.single('profileImage'), Controller.UserController.userImage);
 userRoute.get('/data', requireUser, Controller.UserController.userData);
+userRoute.patch('/update-bio', requireUser, Controller.UserController.update_bio_data)
+
 module.exports = {
     userRoute,
 }

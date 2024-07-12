@@ -12,10 +12,10 @@ const carePulseUserSchema = new mongoose.Schema({
         phone: {
             type: String,
         },
-        dateofbirth: {
+        gender: {
             type: String,
         },
-        occupation: {
+        dateofbirth: {
             type: String,
         },
         address: {
@@ -23,7 +23,6 @@ const carePulseUserSchema = new mongoose.Schema({
         },
         emergencyContact: {
             type: String,
-            unique: true,
          },
         emergencyContactPhone: {
             type: String,

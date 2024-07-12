@@ -1,9 +1,39 @@
-const bankUsers = require("../models/carePulseUsersModel");
+const carePulseUsers = require("../models/carePulseUsersModel");
 const myImages = require('../models/imageModel');
 const { cloudinary } = require('../utils/cloudinary');
 const fs = require('fs');
 const path = require('path');
 
+const update_bio_data = async (req, res) => {
+  const {fullName, phone, birthDate, gender, address, emergencyContactName, emergencyContactNumber} = req.body;
+  const  userId  = req.user._id;
+  try {
+     // Find the user by userId
+     const user = await carePulseUsers.findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: "User does not exist!!" });
+    }
+    
+     // Update the phone number
+     user.phone = phone;
+     user.fullName = fullName;
+     user.dateofbirth = birthDate;
+     user.gender = gender;
+     user.address = address;
+     user.emergencyContact = emergencyContactName;
+     user.emergencyContactPhone = emergencyContactNumber;
+
+     // Save the updated user
+     const updatedUser = await user.save();
+ 
+    return res.status(200).json({ message: 'User data updated', updatedUser });
+  
+
+  } catch (error) {
+    console.log(error);
+    res.send({ status: 'error', data: error });
+  }
+}
 const userImage = async (req, res) => {
   console.log("testing", req.user);
   const  userId  = req.user._id;
@@ -11,7 +41,7 @@ const userImage = async (req, res) => {
 
   try {
     // Find the user by userId
-    const user = await bankUsers.findById(userId);
+    const user = await carePulseUsers.findById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
@@ -72,7 +102,7 @@ const userImage = async (req, res) => {
 const userData = async (req, res) => {
   const userId = req.user._id;
   try {
-    const userData = await bankUsers.findOne({ _id: userId });
+    const userData = await carePulseUsers.findOne({ _id: userId });
 
     if (!userData) {
       return res.status(404).json({ error: "User does not exist!!" });
@@ -86,7 +116,8 @@ const userData = async (req, res) => {
 
  module.exports = {
     userImage,
-    userData
+    userData,
+    update_bio_data
  }
 
  
