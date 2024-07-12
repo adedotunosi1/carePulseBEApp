@@ -10,7 +10,6 @@ const validate = require('validator');
 const pulseNotification = require('../models/notifications');
 const UserWallet = require('../models/walletModel');
 const userTransaction = require("../models/transactionNewModel");
-const dollarCards = require('../models/dollarCardsModel');
 const { signJWT, verifyJWT } = require('../utils/jwt.utils');
 const { createSession } = require('../utils/session');
 
@@ -263,7 +262,6 @@ const verify_otp = async (req, res, next) => {
   try {
     const { otp } = req.body;
     const user = await pulseUsers.findOne({ otp });
-    console.log(user);
     if (!user) {
       return res.status(401).json({ status: "User does not exist!!" });
     }

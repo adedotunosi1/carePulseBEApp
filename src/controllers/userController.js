@@ -1,8 +1,11 @@
 const carePulseUsers = require("../models/carePulseUsersModel");
 const myImages = require('../models/imageModel');
+const myDocument = require('../models/documentsModel');
 const { cloudinary } = require('../utils/cloudinary');
 const fs = require('fs');
 const path = require('path');
+const documents = require("../models/documentsModel");
+const { submitNewDoc } = require("../services");
 
 const update_bio_data = async (req, res) => {
   const {fullName, phone, birthDate, gender, address, emergencyContactName, emergencyContactNumber} = req.body;
@@ -33,6 +36,60 @@ const update_bio_data = async (req, res) => {
     console.log(error);
     res.send({ status: 'error', data: error });
   }
+}
+
+const identity_document = async (req, res) => {
+ const {documentType, documentNumber, base64} = req.body;
+ const  userId  = req.user._id;
+ try {
+    // Find the user by userId
+    const user = await carePulseUsers.findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: "User does not exist!!" });
+    }
+    if (!base64) {
+      return res.status(400).json({ error: 'Missing required parameter - file' });
+    }
+    const imageBuffer = Buffer.from(base64, 'base64');
+
+    // Create the temp directory if it doesn't exist
+    const tempDirPath = path.join(__dirname, '..', 'identity');
+    if (!fs.existsSync(tempDirPath)) {
+      fs.mkdirSync(tempDirPath);
+    }
+
+    // Create a temporary file path for the image
+    const tempImagePath = path.join(tempDirPath, `${userId}-identity-document.jpg`);
+
+    // Write the buffer to the temporary file
+    fs.writeFileSync(tempImagePath, imageBuffer);
+
+    cloudinary.uploader.upload(tempImagePath, async (error, result) => {
+      // Delete the temporary file
+      fs.unlinkSync(tempImagePath);
+
+      if (error) {
+        console.log(error);
+        return res.send({ status: 'error', data: error });
+      }
+      const role = user.role;
+      try {
+        const submitDoc = await myDocument.create({
+          documentType, documentNumber, documentFile: result.secure_url, status: "pending", role, userId
+        });
+
+        return res.json({ status: "ok", message: 'Document uploaded successfully' });
+      } catch (error) {
+        console.log(error);
+        res.send({ status: 'error', data: error });
+      } 
+    });
+
+ } catch (error) {
+  console.log(error);
+  return res.status(400).json({ error: "Internal Server Error"});
+ }
+
 }
 const userImage = async (req, res) => {
   console.log("testing", req.user);
@@ -107,7 +164,8 @@ const userData = async (req, res) => {
     if (!userData) {
       return res.status(404).json({ error: "User does not exist!!" });
     }
-    res.send({ message: 'Your Data', userData});
+    const documentData = await myDocument.findOne({ userId });
+    res.send({ message: 'Your Data', bioData: userData, documents: documentData });
   } catch (error) {
     console.log(error);
   }
@@ -117,7 +175,8 @@ const userData = async (req, res) => {
  module.exports = {
     userImage,
     userData,
-    update_bio_data
+    update_bio_data,
+    identity_document
  }
 
  
