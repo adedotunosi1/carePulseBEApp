@@ -9,6 +9,8 @@ userRoute.post('/imageUpload', requireUser, upload.single('profileImage'), Contr
 userRoute.post('/documentUpload', requireUser, upload.single('IdentityImage'), Controller.UserController.identity_document);
 userRoute.get('/data', requireUser, Controller.UserController.userData);
 userRoute.patch('/update-bio', requireUser, Controller.UserController.update_bio_data)
+userRoute.post('/patientMedicalData', requireUser, Controller.UserController.update_patient_data);
+userRoute.post('/doctorMedicalData', requireUser, Controller.UserController.update_doctor_data);
 module.exports = {
     userRoute,
 }

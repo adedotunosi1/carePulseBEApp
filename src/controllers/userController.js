@@ -6,6 +6,8 @@ const fs = require('fs');
 const path = require('path');
 const documents = require("../models/documentsModel");
 const { submitNewDoc } = require("../services");
+const patientData = require('../models/patientDataModel');
+const doctorData = require('../models/doctorDataModel');
 
 const update_bio_data = async (req, res) => {
   const {fullName, phone, birthDate, gender, address, emergencyContactName, emergencyContactNumber} = req.body;
@@ -35,6 +37,61 @@ const update_bio_data = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.send({ status: 'error', data: error });
+  }
+}
+
+const update_patient_data = async (req,res) => {
+  const {bloodGroup, genoType, allergies, medications, medicalHistory} = req.body;
+  const userId =  req.user._id;
+
+  try {
+    // Find the user by userId
+    const user = await carePulseUsers.findOne({ _id: userId });
+    console.log(user)
+    if (!user) {
+      return res.status(404).json({ error: "User does not exist!!" });
+    }
+    if(user.role !== 'Patient'){
+      return res.status(404).json({ error: "Only Patient Allowed!" });
+    }
+   const fullName = user.fullName;
+
+   const submitData = await patientData.create({
+    userId, fullName, bloodGroup, genoType, allergies, medications, medicalHistory
+   })
+   
+   return res.json({ status: "ok", message: 'Medical Data Saved!' });
+
+  } catch (error) {
+    console.log(error);
+  return res.status(400).json({ error: "Internal Server Error"});
+  }
+}
+
+const update_doctor_data = async (req,res) => {
+  const {medicalLicenseNumber, specialization, yearsOfExperience, consultationHours, clinicName, clinicAddress} = req.body;
+  const userId =  req.user._id;
+
+  try {
+    // Find the user by userId
+    const user = await carePulseUsers.findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: "User does not exist!!" });
+    }
+    if(user.role !== 'Doctor'){
+      return res.status(404).json({ error: "Only Doctors Allowed!" });
+    }
+   const fullName = user.fullName;
+
+   const submitData = await doctorData.create({
+    userId, fullName, medicalLicenseNumber, specialization, yearsOfExperience, consultationHours, clinicName, clinicAddress
+   })
+   
+   return res.json({ status: "ok", message: 'Medical Data Saved!' });
+
+  } catch (error) {
+    console.log(error);
+  return res.status(400).json({ error: "Internal Server Error"});
   }
 }
 
@@ -113,13 +170,13 @@ const userImage = async (req, res) => {
     const imageBuffer = Buffer.from(base64, 'base64');
 
     // Create the temp directory if it doesn't exist
-    const tempDirPath = path.join(__dirname, '..', 'temp');
+    const tempDirPath = path.join(__dirname, '..', 'profile');
     if (!fs.existsSync(tempDirPath)) {
       fs.mkdirSync(tempDirPath);
     }
 
     // Create a temporary file path for the image
-    const tempImagePath = path.join(tempDirPath, `${userId}-temp-image.jpg`);
+    const tempImagePath = path.join(tempDirPath, `${userId}-profile-image.jpg`);
 
     // Write the buffer to the temporary file
     fs.writeFileSync(tempImagePath, imageBuffer);
@@ -141,7 +198,7 @@ const userImage = async (req, res) => {
           cloudinary_id: result.public_id,
         });
 
-        user.userImage = result.secure_url;
+        user.profilePic = result.secure_url;
         await user.save();
 
         res.send({ status: 'ok', message: 'Image upload successful', data: image, images: userImageGallery});
@@ -165,7 +222,14 @@ const userData = async (req, res) => {
       return res.status(404).json({ error: "User does not exist!!" });
     }
     const documentData = await myDocument.findOne({ userId });
-    res.send({ message: 'Your Data', bioData: userData, documents: documentData });
+
+     let medicalData;
+     if (userData.role === 'Patient') {
+       medicalData = await patientData.findOne({ userId });
+     } else {
+       medicalData = await doctorData.findOne({ userId });
+     }
+    res.send({ message: 'Your Data', bioData: userData, documents: documentData, medicals: medicalData });
   } catch (error) {
     console.log(error);
   }
@@ -176,7 +240,9 @@ const userData = async (req, res) => {
     userImage,
     userData,
     update_bio_data,
-    identity_document
+    identity_document,
+    update_patient_data,
+    update_doctor_data
  }
 
  
