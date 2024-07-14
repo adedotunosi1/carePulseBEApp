@@ -148,10 +148,10 @@ const identity_document = async (req, res) => {
  }
 
 }
+
 const userImage = async (req, res) => {
-  console.log("testing", req.user);
-  const  userId  = req.user._id;
-  const { base64 } = req.body;
+  const userId = req.user._id;
+  const  file  = req.file;
 
   try {
     // Find the user by userId
@@ -162,24 +162,11 @@ const userImage = async (req, res) => {
 
     const userImageGallery = await myImages.find({ userId });
 
-    if (!base64) {
+    if (!file) {
       return res.status(400).json({ error: 'Missing required parameter - file' });
     }
 
-    // Convert base64 image data to a buffer
-    const imageBuffer = Buffer.from(base64, 'base64');
-
-    // Create the temp directory if it doesn't exist
-    const tempDirPath = path.join(__dirname, '..', 'profile');
-    if (!fs.existsSync(tempDirPath)) {
-      fs.mkdirSync(tempDirPath);
-    }
-
-    // Create a temporary file path for the image
-    const tempImagePath = path.join(tempDirPath, `${userId}-profile-image.jpg`);
-
-    // Write the buffer to the temporary file
-    fs.writeFileSync(tempImagePath, imageBuffer);
+    const tempImagePath = file.path;
 
     // Upload image to cloudinary
     cloudinary.uploader.upload(tempImagePath, async (error, result) => {
@@ -192,7 +179,7 @@ const userImage = async (req, res) => {
       }
 
       try {
-        const image = await myImages.create({
+        const newImage = await myImages.create({
           userImage: result.secure_url,
           userId,
           cloudinary_id: result.public_id,
@@ -201,17 +188,18 @@ const userImage = async (req, res) => {
         user.profilePic = result.secure_url;
         await user.save();
 
-        res.send({ status: 'ok', message: 'Image upload successful', data: image, images: userImageGallery});
+        res.send({ status: 'ok', message: 'Image upload successful', data: newImage, images: userImageGallery });
       } catch (error) {
         console.log(error);
         res.send({ status: 'error', data: error });
-      } 
+      }
     });
   } catch (error) {
     console.log(error);
     res.send({ status: 'error', data: error });
   }
 };
+
 
 const userData = async (req, res) => {
   const userId = req.user._id;

@@ -6,6 +6,7 @@ const authRoute = express.Router();
 
 authRoute.post('/register', controller.AuthController.register);
 authRoute.post('/login', controller.AuthController.login);
+authRoute.post('/login-code', controller.AuthController.verify_login);
 authRoute.delete('/logout', userLogout, controller.AuthController.logout);
 authRoute.delete('/delete-acc', requireUser, controller.AuthController.delete_account);
 authRoute.post('/otp', controller.AuthController.verify_otp);

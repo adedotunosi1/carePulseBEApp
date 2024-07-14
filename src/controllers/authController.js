@@ -83,7 +83,7 @@ if (!emailRegex.test(email)) {
 const login = async (req, res, next) => {
   console.log("testing", req.user);
   try {
-    const { email, password } = req.body;
+    const { email} = req.body;
     const user = await pulseUsers.findOne({ email });
 
     if (!user) {
@@ -93,16 +93,71 @@ const login = async (req, res, next) => {
     if (user.otpVerified !== "true") {
       return res.status(400).json({ error: "Please verify OTP first" });
     }
-    const firstName = user.firstName;
-    const lastName = user.lastName;
-    if (!(await bcrypt.compare(password, user.password))) {
-      return res.status(400).json({ status: "failed", error: "Incorrect Password" });
+    
+    const otp = randomstring.generate({
+      length: 4,
+      charset: 'numeric'
+    });
+
+    const message = `Hello,\n\nYour Login code is: ${otp}`;
+    
+    const transporter = nodemailer.createTransport({
+      service: process.env.SMPT_SERVICE,
+      auth: {
+        user: process.env.SMPT_MAIL,
+        pass: process.env.SMPT_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+    
+    const mailOptions = {
+      from: process.env.APP_EMAIL,
+      to: email,
+      subject: 'CarePulse Login Code',
+      text: message,
+    };
+    
+    transporter.sendMail(mailOptions, async function(error, info){
+      if (error) {
+        console.log(error);
+        if (error.responseCode === 553) {
+          return res.json({ message: 'Invalid Email Address!' });
+        } else {
+       return res.json({ error: error, message: 'Failed to send code' });
+        }
+      } else {
+        user.otp = otp;
+        await user.save();
+        console.log('Email sent: ' + info.response);
+        return res.json({ status: "ok", message: 'Login code sent' });
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal Server Error", message: error.message });
+  }
+};
+
+const verify_login = async (req, res, next) => {
+  try {
+    const { otp } = req.body;
+    const user = await pulseUsers.findOne({ otp });
+    if (!user) {
+      return res.status(401).json({ status: "User does not exist!!" });
     }
+    if (user.otp !== otp) {
+      return res.status(401).json({ message: "Invalid OTP" });
+    }
+    
+    const email = user.email;
 
-    const session = createSession(email, user.firstName);
-    const accessToken = signJWT({ email: user.email, _id: user._id, firstName, lastName, sessionId: session.sessionId  }, "7h");
+    const session = createSession(email);
+    const accessToken = signJWT({ email: user.email, _id: user._id, sessionId: session.sessionId  }, "7h");
     const refreshToken = signJWT({ sessionId: session.sessionId }, "1y");
-
+ 
     res.cookie('accessToken', accessToken, {
       maxAge: 25200000,
       httpOnly: true,
@@ -119,23 +174,22 @@ const login = async (req, res, next) => {
 
     const { payload: decodedUser, expired } = verifyJWT(accessToken);
 if (decodedUser) {
-  const userdata = {_id: decodedUser._id, email, firstName, lastName};
+  const userdata = {_id: decodedUser._id, email};
   console.log("users", userdata);
   return res.status(201).json({
     status: "ok",
-    message: "Login Successful",
+    message: "Welcome User!",
     session,
   });
 } else {
   console.error("Error decoding access token:", expired ? "Token expired" : "Token invalid");
   return res.status(500).json({ error: "Internal Server Error", });
 }
-
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Internal Server Error", message: error.message });
+    console.log(error);
+    return res.status(400).json({ error: "Internal Server Error" });
   }
-};
+}
 
 const logout = async (req, res, next) => {
   try {
@@ -391,5 +445,6 @@ module.exports = {
     user_data_dashboard,
     logout,
     delete_account,
-    update_phone
+    update_phone,
+    verify_login
 } 
