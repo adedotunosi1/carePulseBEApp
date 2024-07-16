@@ -79,9 +79,9 @@ if (!emailRegex.test(email)) {
 }
 
 const login = async (req, res, next) => {
-  console.log("testing", req.user);
+  const { email} = req.body;
+  console.log(email);
   try {
-    const { email} = req.body;
     const user = await pulseUsers.findOne({ email });
 
     if (!user) {
