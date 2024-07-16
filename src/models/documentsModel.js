@@ -5,9 +5,6 @@ const identityDocumentSchema = new mongoose.Schema({
     documentType: {
         type: String, 
     },
-    documentNumber: {
-        type: Number
-    },
     documentFile: {
         type: String,
     },

@@ -8,8 +8,6 @@ const { createNewUser } = require('../services');
 const images = require('../models/imageModel');
 const validate = require('validator');
 const pulseNotification = require('../models/notifications');
-const UserWallet = require('../models/walletModel');
-const userTransaction = require("../models/transactionNewModel");
 const { signJWT, verifyJWT } = require('../utils/jwt.utils');
 const { createSession } = require('../utils/session');
 
@@ -153,6 +151,7 @@ const verify_login = async (req, res, next) => {
     }
     
     const email = user.email;
+    const role = user.role;
 
     const session = createSession(email);
     const accessToken = signJWT({ email: user.email, _id: user._id, sessionId: session.sessionId  }, "7h");
@@ -175,11 +174,11 @@ const verify_login = async (req, res, next) => {
     const { payload: decodedUser, expired } = verifyJWT(accessToken);
 if (decodedUser) {
   const userdata = {_id: decodedUser._id, email};
-  console.log("users", userdata);
   return res.status(201).json({
     status: "ok",
     message: "Welcome User!",
     session,
+    role
   });
 } else {
   console.error("Error decoding access token:", expired ? "Token expired" : "Token invalid");
@@ -197,7 +196,7 @@ const logout = async (req, res, next) => {
       expires: new Date(0),
       httpOnly: true,
       path: '/',
-      domain: 'https://wallet-wb.vercel.app',
+      domain: 'localhost:4000',
       secure: true,
       sameSite: 'none',
     });
@@ -206,7 +205,7 @@ const logout = async (req, res, next) => {
       expires: new Date(0),
       httpOnly: true,
       path: '/',
-      domain: 'https://wallet-wb.vercel.app',
+      domain: 'localhost:4000',
       secure: true,
       sameSite: 'none',
     });
@@ -328,7 +327,7 @@ const verify_otp = async (req, res, next) => {
     const email = user.email;
     user.otpVerified = true;
     await user.save();
-
+    const role = user.role;
     const session = createSession(email);
     const accessToken = signJWT({ email: user.email, _id: user._id, sessionId: session.sessionId  }, "7h");
     const refreshToken = signJWT({ sessionId: session.sessionId }, "1y");
@@ -355,6 +354,7 @@ if (decodedUser) {
     status: "ok",
     message: "Welcome",
     session,
+    role
   });
 } else {
   console.error("Error decoding access token:", expired ? "Token expired" : "Token invalid");

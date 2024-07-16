@@ -96,7 +96,7 @@ const update_doctor_data = async (req,res) => {
 }
 
 const identity_document = async (req, res) => {
- const {documentType, documentNumber, base64} = req.body;
+ const {documentType, base64} = req.body;
  const  userId  = req.user._id;
  try {
     // Find the user by userId
@@ -132,7 +132,7 @@ const identity_document = async (req, res) => {
       const role = user.role;
       try {
         const submitDoc = await myDocument.create({
-          documentType, documentNumber, documentFile: result.secure_url, status: "pending", role, userId
+          documentType, documentFile: result.secure_url, status: "pending", role, userId
         });
 
         return res.json({ status: "ok", message: 'Document uploaded successfully' });
