@@ -13,7 +13,7 @@ const { makeUsers } = require("./src/middlewares/user.middleware");
 dbConnect();
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({extended: true}));
-const allowedOrigins = ["https://wallet-wb.vercel.app", "http://localhost:4000"];
+const allowedOrigins = ["https://carepulse-gray.vercel.app", "http://localhost:4000"];
 
 app.use(cors({
   origin: function (origin, callback) {
