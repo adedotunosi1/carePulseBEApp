@@ -7,7 +7,7 @@ const { uploadnew } = require('../utils/newmulterConfig');
 const userRoute = express.Router();
 
 userRoute.post('/imageUpload', requireUser, uploadnew.single('profileImage'), Controller.UserController.userImage);
-userRoute.post('/documentUpload', requireUser, upload.single('IdentityImage'), Controller.UserController.identity_document);
+userRoute.post('/documentUpload', requireUser, uploadnew.single('documentImage'), Controller.UserController.identity_document);
 userRoute.get('/data', requireUser, Controller.UserController.userData);
 userRoute.patch('/update-bio', requireUser, Controller.UserController.update_bio_data)
 userRoute.post('/patientMedicalData', requireUser, Controller.UserController.update_patient_data);

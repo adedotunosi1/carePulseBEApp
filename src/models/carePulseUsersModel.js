@@ -48,6 +48,9 @@ const carePulseUserSchema = new mongoose.Schema({
             type: String,
             required: [true]
         },
+        onboardingVerified: {
+            type: String,
+        }
 },
 {
     timestamps: true,

@@ -12,8 +12,9 @@ const storage = multer.diskStorage({
       cb(err);
     }
   },
-filename: function (req, file, cb) {
-    cb(null, 'profileImage-' + Date.now() + path.extname(file.originalname));
+  filename: function (req, file, cb) {
+    const type = req.body.type || 'profileImage'; // Default to 'profileImage' if no type is provided
+    cb(null, `${type}-${Date.now()}${path.extname(file.originalname)}`);
   },
 });
 

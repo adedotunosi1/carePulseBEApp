@@ -10,6 +10,9 @@ const validate = require('validator');
 const pulseNotification = require('../models/notifications');
 const { signJWT, verifyJWT } = require('../utils/jwt.utils');
 const { createSession } = require('../utils/session');
+const patientData = require('../models/patientDataModel');
+const doctorData = require('../models/doctorDataModel');
+const myDocument = require('../models/documentsModel');
 
 
 const register = async (req, res, next) => {
@@ -153,6 +156,17 @@ const verify_login = async (req, res, next) => {
     const email = user.email;
     const role = user.role;
 
+    const documentData = await myDocument.findOne({ userId });
+
+    let medicalData;
+    if (userData.role === 'Patient') {
+      medicalData = await patientData.findOne({ userId });
+    } else {
+      medicalData = await doctorData.findOne({ userId });
+    }
+
+    const onboarding = documentData !== null && medicalData !== null;
+
     const session = createSession(email);
     const accessToken = signJWT({ email: user.email, _id: user._id, sessionId: session.sessionId  }, "7h");
     const refreshToken = signJWT({ sessionId: session.sessionId }, "1y");
@@ -178,7 +192,8 @@ if (decodedUser) {
     status: "ok",
     message: "Welcome User!",
     session,
-    role
+    role,
+    onboarding
   });
 } else {
   console.error("Error decoding access token:", expired ? "Token expired" : "Token invalid");

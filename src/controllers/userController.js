@@ -96,31 +96,22 @@ const update_doctor_data = async (req,res) => {
 }
 
 const identity_document = async (req, res) => {
- const {documentType, base64} = req.body;
+ const {documentType} = req.body;
  const  userId  = req.user._id;
+ const  file  = req.file;
  try {
     // Find the user by userId
     const user = await carePulseUsers.findOne({ _id: userId });
     if (!user) {
       return res.status(404).json({ error: "User does not exist!!" });
     }
-    if (!base64) {
+    if (!file) {
       return res.status(400).json({ error: 'Missing required parameter - file' });
     }
-    const imageBuffer = Buffer.from(base64, 'base64');
 
-    // Create the temp directory if it doesn't exist
-    const tempDirPath = path.join(__dirname, '..', 'identity');
-    if (!fs.existsSync(tempDirPath)) {
-      fs.mkdirSync(tempDirPath);
-    }
+    const tempImagePath = file.path;
 
-    // Create a temporary file path for the image
-    const tempImagePath = path.join(tempDirPath, `${userId}-identity-document.jpg`);
-
-    // Write the buffer to the temporary file
-    fs.writeFileSync(tempImagePath, imageBuffer);
-
+    // Upload image to cloudinary
     cloudinary.uploader.upload(tempImagePath, async (error, result) => {
       // Delete the temporary file
       fs.unlinkSync(tempImagePath);
@@ -129,13 +120,13 @@ const identity_document = async (req, res) => {
         console.log(error);
         return res.send({ status: 'error', data: error });
       }
-      const role = user.role;
+       const role = user.role;
       try {
         const submitDoc = await myDocument.create({
-          documentType, documentFile: result.secure_url, status: "pending", role, userId
+          documentType, documentImage: result.secure_url, status: "pending", role, userId
         });
 
-        return res.json({ status: "ok", message: 'Document uploaded successfully' });
+        return res.json({ status: "ok", message: 'Document uploaded successfully', submitDoc });
       } catch (error) {
         console.log(error);
         res.send({ status: 'error', data: error });
@@ -200,28 +191,39 @@ const userImage = async (req, res) => {
   }
 };
 
-
 const userData = async (req, res) => {
   const userId = req.user._id;
   try {
     const userData = await carePulseUsers.findOne({ _id: userId });
 
     if (!userData) {
-      return res.status(404).json({ error: "User does not exist!!" });
+      return res.status(404).json({ error: "User does not exist!" });
     }
+
     const documentData = await myDocument.findOne({ userId });
 
-     let medicalData;
-     if (userData.role === 'Patient') {
-       medicalData = await patientData.findOne({ userId });
-     } else {
-       medicalData = await doctorData.findOne({ userId });
-     }
-    res.send({ message: 'Your Data', bioData: userData, documents: documentData, medicals: medicalData });
+    let medicalData;
+    if (userData.role === 'Patient') {
+      medicalData = await patientData.findOne({ userId });
+    } else {
+      medicalData = await doctorData.findOne({ userId });
+    }
+
+    const onboarding = documentData !== null && medicalData !== null;
+
+    res.send({ 
+      message: 'Your Data', 
+      bioData: userData, 
+      documents: documentData, 
+      medicals: medicalData,
+      onboarding: onboarding ? true : false
+    });
   } catch (error) {
     console.log(error);
+    res.status(500).json({ error: "An error occurred while fetching user data." });
   }
 }
+
 
 
  module.exports = {
