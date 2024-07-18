@@ -146,6 +146,7 @@ const verify_login = async (req, res, next) => {
   try {
     const { otp } = req.body;
     const user = await pulseUsers.findOne({ otp });
+    console.log(user);
     if (!user) {
       return res.status(401).json({ status: "User does not exist!!" });
     }
@@ -155,11 +156,13 @@ const verify_login = async (req, res, next) => {
     
     const email = user.email;
     const role = user.role;
+    const userId = user._id;
+    console.log(userId);
 
     const documentData = await myDocument.findOne({ userId });
 
     let medicalData;
-    if (userData.role === 'Patient') {
+    if (user.role === 'Patient') {
       medicalData = await patientData.findOne({ userId });
     } else {
       medicalData = await doctorData.findOne({ userId });
