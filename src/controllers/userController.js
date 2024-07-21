@@ -78,9 +78,6 @@ const update_doctor_data = async (req,res) => {
     if (!user) {
       return res.status(404).json({ error: "User does not exist!!" });
     }
-    if(user.role !== 'Doctor'){
-      return res.status(404).json({ error: "Only Doctors Allowed!" });
-    }
    const fullName = user.fullName;
 
    const submitData = await doctorData.create({
