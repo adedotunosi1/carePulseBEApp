@@ -95,6 +95,7 @@ const update_doctor_data = async (req,res) => {
 const identity_document = async (req, res) => {
  const  userId  = req.user._id;
  const  file  = req.file;
+ console.log(userId);
  try {
     // Find the user by userId
     const user = await carePulseUsers.findOne({ _id: userId });
@@ -104,8 +105,6 @@ const identity_document = async (req, res) => {
     if (!file) {
       return res.status(400).json({ error: 'Missing required parameter - file' });
     }
-
-    const documentType = NationalIdCard;
 
     const tempImagePath = file.path;
 
@@ -121,7 +120,7 @@ const identity_document = async (req, res) => {
        const role = user.role;
       try {
         const submitDoc = await myDocument.create({
-          documentType, documentImage: result.secure_url, status: "pending", role, userId
+          documentType: "NationalIdCard", documentImage: result.secure_url, status: "pending", role, userId
         });
 
         return res.json({ status: "ok", message: 'Document uploaded successfully', submitDoc });
