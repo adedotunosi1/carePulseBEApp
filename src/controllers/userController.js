@@ -93,7 +93,6 @@ const update_doctor_data = async (req,res) => {
 }
 
 const identity_document = async (req, res) => {
- const {documentType} = req.body;
  const  userId  = req.user._id;
  const  file  = req.file;
  try {
@@ -105,6 +104,8 @@ const identity_document = async (req, res) => {
     if (!file) {
       return res.status(400).json({ error: 'Missing required parameter - file' });
     }
+
+    const documentType = NationalIdCard;
 
     const tempImagePath = file.path;
 
