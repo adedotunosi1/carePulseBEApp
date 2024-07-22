@@ -92,10 +92,16 @@ const update_doctor_data = async (req,res) => {
   }
 }
 
+const create_appointment = async (req, res) => {
+
+}
+
+const cancel_appointment = async (req, res) => {
+
+}
 const identity_document = async (req, res) => {
  const  userId  = req.user._id;
  const  file  = req.file;
- console.log(userId);
  try {
     // Find the user by userId
     const user = await carePulseUsers.findOne({ _id: userId });
@@ -197,7 +203,12 @@ const userData = async (req, res) => {
       return res.status(404).json({ error: "User does not exist!" });
     }
 
-    const documentData = await myDocument.findOne({ userId });
+    let documentData; 
+    if (userData.role === 'Patient') {
+      documentData = await myDocument.findOne({ userId });
+    } else {
+      documentData = 'not needed'
+    }
 
     let medicalData;
     if (userData.role === 'Patient') {
@@ -220,6 +231,7 @@ const userData = async (req, res) => {
     res.status(500).json({ error: "An error occurred while fetching user data." });
   }
 }
+
 
 
 
