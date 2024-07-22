@@ -8,6 +8,7 @@ const documents = require("../models/documentsModel");
 const { submitNewDoc } = require("../services");
 const patientData = require('../models/patientDataModel');
 const doctorData = require('../models/doctorDataModel');
+const appointmentData = require('../models/appointmentModel');
 
 const update_bio_data = async (req, res) => {
   const {fullName, phone, birthDate, gender, address, emergencyContactName, emergencyContactNumber} = req.body;
@@ -93,12 +94,94 @@ const update_doctor_data = async (req,res) => {
 }
 
 const create_appointment = async (req, res) => {
+  const {reason, schedule, comment} = req.body;
+  const  userId  = req.user._id;
+   try {
+    const user = await carePulseUsers.findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: "User does not exist!!" });
+    }
+    console.log(user)
+    const fullName = user.fullName
 
+    const submitAppointment = await appointmentData.create({
+      userId, reason, schedule, comment, fullName, cancelReason: ""
+     })
+     
+     return res.json({ status: "ok", message: 'Appointment Booked!', submitAppointment });
+
+   } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "Internal Server Error"});
+   }
 }
 
 const cancel_appointment = async (req, res) => {
+  const  userId  = req.user._id;
+  const {appointmentId, cancel_reason} = req.body;
+   try {
+    const user = await carePulseUsers.findOne({ _id: userId });
+    if (!user) {
+      return res.status(404).json({ error: "User does not exist!!" });
+    }
+    
+    const booking = await appointmentData.findOne({appointmentId});
+    console.log(booking);
 
+    if (!booking) {
+      return res.status(404).json({ error: "Booking does not exist!!" });
+    }
+
+    booking.status = "cancelled";
+    booking.cancelReason = cancel_reason;
+    await booking.save();
+   
+    return res.json({ status: "ok", message: 'Appointment Cancelled', booking });
+    
+   } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "Internal Server Error"});
+   }
 }
+
+const all_patients = async (req, res) => {
+  try {
+    
+    const patients = await carePulseUsers.find({ role: "Patient" });
+
+    return res.json({ status: "ok", message: 'All patients fetched', patients });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "Internal server error" });
+  }
+};
+
+
+const all_doctors = async (req, res) => {
+  try {
+
+    const physicians = await carePulseUsers.find({ role: "Physician" });
+    
+    return res.json({ status: "ok", message: 'All patients fetched', physicians });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ error: "Internal server error" });
+  }
+};
+
+
+const all_appointments = async (req, res) => {
+  try {
+   const appointments = await appointmentData.find({ })
+
+ return res.json({ status: "ok", message: 'All appointments fetched', appointments})
+  } catch (error) {
+    console.log(error)
+    return res.status(400).json({ error: "Internal server error"});
+
+  }
+}
+
 const identity_document = async (req, res) => {
  const  userId  = req.user._id;
  const  file  = req.file;
@@ -241,7 +324,12 @@ const userData = async (req, res) => {
     update_bio_data,
     identity_document,
     update_patient_data,
-    update_doctor_data
+    update_doctor_data,
+    create_appointment,
+    cancel_appointment,
+    all_patients,
+    all_doctors,
+    all_appointments
  }
 
  
