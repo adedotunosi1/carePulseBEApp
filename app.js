@@ -13,9 +13,9 @@ const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
 
-const GOOGLE_CLIENT_ID = "590037273390-e9d87r69ho3l9cmtntf01seph4ji77pi.apps.googleusercontent.com"
-const GOOGLE_CLIENT_SECRET = "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"
-const GOOGLE_REDIRECT_URI = 'http://localhost:4000/oauth2callback';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+const GOOGLE_REDIRECT_URI = 'https://carepulsebeapp.onrender.com/oauth2callback';
 
 const oAuth2Client = new OAuth2Client(
   GOOGLE_CLIENT_ID,

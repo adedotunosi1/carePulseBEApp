@@ -12,9 +12,9 @@ const nodemailer = require('nodemailer');
 const doctorData = require('../models/doctorDataModel');
 const appointmentData = require('../models/appointmentModel');
 const { OAuth2Client } = require('google-auth-library');
-const GOOGLE_CLIENT_ID = "590037273390-e9d87r69ho3l9cmtntf01seph4ji77pi.apps.googleusercontent.com"
-const GOOGLE_CLIENT_SECRET = "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"
-const GOOGLE_REDIRECT_URI = 'http://localhost:4000/oauth2callback';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
+const GOOGLE_REDIRECT_URI = 'https://carepulsebeapp.onrender.com/oauth2callback';
 
 const oAuth2Client = new OAuth2Client(
   GOOGLE_CLIENT_ID,
@@ -24,8 +24,8 @@ const oAuth2Client = new OAuth2Client(
 
 // Set credentials
 oAuth2Client.setCredentials({
-  access_token: "ya29.a0AcM612zhQtJr3B_5K6FUZAGhuCFCLSRSouqEe84idNztektmz3H7_5O1BNYNvk2irMi-GmICWPyQMVPXa99BxrksJvApqFZaYD7VD6MErwca6juQyL-0koET0EW_Ks4h1UqwGVl-78bvngQOSLq_hRd7w3NxbpNDn-s0aCgYKAbgSAQ8SFQHGX2Mimt9oVe-eylV3MqazJkdgYw0171",
-  refresh_token: "1//03ZoD6K5ORvCNCgYIARAAGAMSNwF-L9IrgCQTts8C2Znljf9UwjHY_QmG8kdeTFYGqjMe80sCUnbrs8zqf1E-GjUywNxIGAVFdRc",
+  access_token: process.env.OAUTH_ACCESS_TOKEN,
+  refresh_token: process.env.OAUTH_REFRESH_TOKEN,
 });
 const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
 
