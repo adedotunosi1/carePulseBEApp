@@ -9,10 +9,32 @@ const { routeError, errorHandler } = require('./src/middlewares/error.middleware
 const cookieParser = require('cookie-parser');
 const winston = require('winston');
 const { makeUsers } = require("./src/middlewares/user.middleware");
+const { google } = require('googleapis');
+const { OAuth2Client } = require('google-auth-library');
+require('dotenv').config();
 
+const GOOGLE_CLIENT_ID = "590037273390-e9d87r69ho3l9cmtntf01seph4ji77pi.apps.googleusercontent.com"
+const GOOGLE_CLIENT_SECRET = "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"
+const GOOGLE_REDIRECT_URI = 'http://localhost:4000/oauth2callback';
+
+const oAuth2Client = new OAuth2Client(
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI
+);
+
+const authUrl = oAuth2Client.generateAuthUrl({
+  access_type: 'offline',
+  scope: ['https://www.googleapis.com/auth/calendar'],
+});
+
+console.log('authUrl:', authUrl);
+
+// Database connection
 dbConnect();
+
 app.set('view engine', 'ejs');
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = ["https://carepulse-gray.vercel.app", "http://localhost:4000"];
 
 app.use(cors({
@@ -25,16 +47,16 @@ app.use(cors({
   },
   credentials: true
 }));
- 
+
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 
 const logger = winston.createLogger({
   level: 'debug',
   format: winston.format.simple(),
   transports: [
-    new winston.transports.Console(), 
+    new winston.transports.Console(),
   ],
 });
 
@@ -44,23 +66,60 @@ app.use((req, res, next) => {
 });
 
 app.use(cookieParser());
-app.use(makeUsers)
+app.use(makeUsers);
+
+app.get('/auth', (req, res) => {
+  res.redirect(authUrl);
+});
+
+app.get('/oauth2callback', async (req, res) => {
+  const code = req.query.code;
+  try {
+    const { tokens } = await oAuth2Client.getToken(code);
+    oAuth2Client.setCredentials(tokens);
+     console.log(tokens);
+    
+     process.env.GOOGLE_ACCESS_TOKEN = tokens.access_token;
+     process.env.GOOGLE_REFRESH_TOKEN = tokens.refresh_token;
+ 
+     // Log tokens to verify they are received correctly
+     console.log('Access Token:', tokens.access_token);
+     console.log('Refresh Token:', tokens.refresh_token);
+
+      // Check if refresh token is missing
+      if (!tokens.refresh_token) {
+        console.log('No refresh token found. Ensure access_type=offline is set and revoke previous access.');
+      }
+
+    res.send('Authentication successful! You can close this window.');
+  } catch (error) {
+    console.error('Error retrieving tokens:', error);
+    res.status(500).send('Error retrieving tokens');
+  }
+});
+
 app.use("/api/v1/", pulseRouter);
 app.use("/api/v1", (req, res, next) => {
   res.send({ msg: `Yes!... Welcome to Care Pulse API` });
   next();
 });
+// Middleware to set credentials for future requests
+app.use((req, res, next) => {
+  oAuth2Client.setCredentials({
+    access_token: process.env.GOOGLE_ACCESS_TOKEN,
+    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+  });
+  next();
+});
 app.use(serverRequests);
 app.get("/", (req, res, next) => {
-    res.send(`
+  res.send(`
     <h2> CarePulse Server </h2>
-    `)
-    next();
-})
+  `);
+  next();
+});
 
 app.use(routeError);
-
 app.use(errorHandler);
-
 
 module.exports = app;
