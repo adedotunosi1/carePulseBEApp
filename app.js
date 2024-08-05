@@ -12,7 +12,6 @@ const { makeUsers } = require("./src/middlewares/user.middleware");
 const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
-
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET
 const GOOGLE_REDIRECT_URI = 'https://carepulsebeapp.onrender.com/oauth2callback';
