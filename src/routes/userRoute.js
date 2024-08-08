@@ -14,7 +14,7 @@ userRoute.post('/patientMedicalData', requireUser, Controller.UserController.upd
 userRoute.post('/doctorMedicalData', requireUser, Controller.UserController.update_doctor_data);
 userRoute.get('/patients', requireUser, Controller.UserController.all_patients);
 userRoute.get('/physicians', requireUser, Controller.UserController.all_doctors);
-userRoute.get('/patient-data', requireUser, Controller.UserController.myuser_data)
+userRoute.post('/patient-data', requireUser, Controller.UserController.myuser_data)
 
 module.exports = {
     userRoute,

@@ -130,7 +130,9 @@ const create_appointment = async (req, res) => {
         };
     
         await transporter.sendMail(mailOptions);
-    
+        const newstatus = "scheduled"
+        booking.status = newstatus;
+        await booking.save();
         res.json({ success: true, message: 'Appointment accepted and scheduled successfully', meetingLink });
   
     } catch (error) {
